@@ -3,19 +3,19 @@
     <van-nav-bar title="账号登录" left-arrow @click-left="onClickLeft">
       <template #left> <van-icon name="arrow-left" /> </template>
     </van-nav-bar>
-    <van-form @submit="login" class="from">
+    <van-form @submit="login">
       <van-field
         v-model="username"
         name="username"
         placeholder="请输入账号"
-        :rules="[{ required: true, message: '请输入账号' }]"
+        :rules="UsernameRule"
       />
       <van-field
         v-model="password"
         type="password"
         name="password"
         placeholder="请输入密码"
-        :rules="[{ required: true, message: '请输入密码' }]"
+        :rules="PasswordRule"
       />
       <div style="margin: 16px">
         <van-button block type="info" native-type="submit">提交</van-button>
@@ -28,11 +28,14 @@
 </template>
 <script>
 import login from '@/api/user'
+import { PasswordRule, UsernameRule } from './rule'
 export default {
   data() {
     return {
       username: '',
-      password: ''
+      password: '',
+      PasswordRule,
+      UsernameRule
     }
   },
   mounted() {},
@@ -42,8 +45,18 @@ export default {
       this.$router.back()
     },
     async login() {
-      const res = await login(this.username, this.password)
-      console.dir(res)
+      this.$toast.loading({
+        message: '....加载中',
+        forbidClick: true
+      })
+      try {
+        const res = await login(this.username, this.password)
+        this.$store.commit('SetToken', res.data.data)
+        this.$router.push('/my')
+        this.$toast.success('登录成功')
+      } catch (error) {
+        this.$toast.fail('登录失败')
+      }
     }
   }
 }
@@ -61,7 +74,7 @@ export default {
     font-size: 16px;
   }
 }
-.from {
+.van-form {
   .van-button {
     background-color: #21b97a;
     width: 345px;
@@ -71,8 +84,8 @@ export default {
   .van-cell {
     margin: 15px;
     width: 345px;
-    height: 60px;
-    line-height: 60px;
+    min-height: 34px;
+    line-height: 34px;
     border-bottom: 1px solid #ddd;
   }
   .van-field__control {
